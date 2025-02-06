@@ -21,6 +21,15 @@ class PostsSerializer(serializers.ModelSerializer):
             tag, _ = Tag.objects.get_or_create(name=tag_name)
             post.tags.add(tag)
         return post
+     
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        user = self.context.get("request").user
+        data["upvote_count"] = Vote.objects.filter(post_id=data["id"], vote_type="UP").count()
+        data["downvote_count"] = Vote.objects.filter(post_id=data["id"], vote_type="DOWN").count()
+        user_has_vote = Vote.objects.filter(voter=user.id, post_id=data["id"]).first()
+        data["user_has_voted"] = user_has_vote.vote_type if user_has_vote else None
+        return data
 
 class CommentsSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)

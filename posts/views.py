@@ -22,8 +22,9 @@ class UserPosts(APIView):
 	permission_classes = [IsAuthenticated]
 	
 	def get(self, request):
-		posts = [PostsSerializer(instance=post).data for post in Post.objects.filter(author_id=request.user.id)]
-		return Response({"posts": posts}, status=status.HTTP_200_OK)
+		posts = Post.objects.filter(author_id=request.user.id)
+		serializer = PostsSerializer(posts, many=True, context={"request": request})
+		return Response({"posts": serializer.data}, status=status.HTTP_200_OK)
 	
 	def post(self, request):
 		serializer = PostsSerializer(data=request.data)
