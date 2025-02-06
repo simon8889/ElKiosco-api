@@ -23,5 +23,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('health', HealthCheck.as_view()),
     path('users/', include("users.urls")),
-    path('posts/', include("posts.urls")),
+    path('', include("posts.urls")),
 ]

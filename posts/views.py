@@ -1,11 +1,13 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from .models import Post, Comment
-from .serializer import PostsSerializer, CommentsSerializer
+from .models import Post, Comment, Vote
+from .serializer import PostsSerializer, CommentsSerializer, VotesSerializer
+from .services import vote_entity, remove_vote_entity
 
 class ListAllPosts(APIView):
 	authentication_classes = [TokenAuthentication]
@@ -76,3 +78,35 @@ class CommentsView(APIView):
 
 		serializer.save()
 		return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def vote_post(request, post_id):
+    data, errors = vote_entity(request.user, Post, post_id, request.data)
+    if errors:
+        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(data, status=status.HTTP_201_CREATED)
+
+@api_view(["POST"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def vote_comment(request, comment_id):
+    data, errors = vote_entity(request.user, Comment, comment_id, request.data)
+    if errors:
+        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(data, status=status.HTTP_201_CREATED)
+	
+@api_view(["DELETE"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def remove_vote_post(request,  post_id):
+    removed = remove_vote_entity(request.user, Post, post_id)
+    return Response({"deleted": removed}, status=status.HTTP_200_OK)
+
+@api_view(["DELETE"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def remove_vote_comment(request, comment_id):
+    removed = remove_vote_entity(request.user, Comment, comment_id)
+    return Response({"deleted": removed}, status=status.HTTP_200_OK)

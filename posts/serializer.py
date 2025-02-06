@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Tag, Comment
+from .models import Post, Tag, Comment, Vote
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,3 +29,9 @@ class CommentsSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Comment
         fields = ["id", "author", "post", "content", "created_at", "parent"]
+
+class VotesSerializer(serializers.ModelSerializer):
+    voter = serializers.PrimaryKeyRelatedField(read_only=True)
+    class Meta:
+        model = Vote
+        fields = ["id", "voter", "post", "comment", "vote_type"]
