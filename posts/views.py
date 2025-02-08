@@ -5,9 +5,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from .models import Post, Comment, Vote
-from .serializer import PostsSerializer, CommentsSerializer, VotesSerializer
-from .services import vote_entity, remove_vote_entity
+from .models import Post, Comment
+from .serializer import PostsSerializer, CommentsSerializer
+from .services import vote_entity, remove_vote_entity, change_vote_type_entity
 
 class ListAllPosts(APIView):
 	authentication_classes = [TokenAuthentication]
@@ -84,30 +84,60 @@ class CommentsView(APIView):
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def vote_post(request, post_id):
-    data, errors = vote_entity(request.user, Post, post_id, request.data)
-    if errors:
-        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(data, status=status.HTTP_201_CREATED)
+	post, errors = vote_entity(request.user, Post, post_id, request.data)
+	
+	if errors:
+		return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+		
+	serializer = PostsSerializer(instance=post, context={"request": request})
+	return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def vote_comment(request, comment_id):
-    data, errors = vote_entity(request.user, Comment, comment_id, request.data)
-    if errors:
-        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
-    return Response(data, status=status.HTTP_201_CREATED)
+	comment, errors = vote_entity(request.user, Comment, comment_id, request.data)
+	
+	if errors:
+		return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+		
+	serializer = Comment(instance=comment, context={"request": request})
+	return Response(serializer.data, status=status.HTTP_201_CREATED)
 	
 @api_view(["DELETE"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def remove_vote_post(request,  post_id):
-    removed = remove_vote_entity(request.user, Post, post_id)
-    return Response({"deleted": removed}, status=status.HTTP_200_OK)
+	removed = remove_vote_entity(request.user, Post, post_id)
+	return Response({"deleted": removed}, status=status.HTTP_200_OK)
 
 @api_view(["DELETE"])
 @authentication_classes([TokenAuthentication])
 @permission_classes([IsAuthenticated])
 def remove_vote_comment(request, comment_id):
-    removed = remove_vote_entity(request.user, Comment, comment_id)
-    return Response({"deleted": removed}, status=status.HTTP_200_OK)
+	removed = remove_vote_entity(request.user, Comment, comment_id)
+	return Response({"deleted": removed}, status=status.HTTP_200_OK)
+
+@api_view(["PUT"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def change_vote_type_post(request, post_id):
+	post_updated, errors = change_vote_type_entity(request.user, Post, post_id)
+	
+	if errors:
+		return Response({"error": errors}, status=status.HTTP_404_NOT_FOUND)
+		
+	serializer = PostsSerializer(instance=post_updated, context={"request": request})
+	return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(["PUT"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def change_vote_type_comment(request, comment_id):
+	comment_updated, errors = change_vote_type_entity(request.user, Comment, comment_id)
+	
+	if errors:
+		return Response({"error": errors}, status=status.HTTP_404_NOT_FOUND)
+		
+	serializer = CommentsSerializer(instance=comment_updated, context={"request": request})
+	return Response(serializer.data, status=status.HTTP_200_OK)
