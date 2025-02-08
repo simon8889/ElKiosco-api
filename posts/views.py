@@ -14,7 +14,7 @@ class ListAllPosts(APIView):
 	permission_classes = [IsAuthenticated]
 
 	def get(self, request):
-		posts = [PostsSerializer(instance=post).data for post in Post.objects.all()]
+		posts = [PostsSerializer(instance=post, context={"request": request}).data for post in Post.objects.all()]
 		return Response({"posts": posts}, status=status.HTTP_200_OK)
 
 class UserPosts(APIView):
@@ -27,7 +27,7 @@ class UserPosts(APIView):
 		return Response({"posts": serializer.data}, status=status.HTTP_200_OK)
 	
 	def post(self, request):
-		serializer = PostsSerializer(data=request.data)
+		serializer = PostsSerializer(data=request.data, context={"request": request})
 		if not serializer.is_valid():
 			return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 		serializer.save(author=request.user)
@@ -40,7 +40,7 @@ class UserPosts(APIView):
 
 	def put(self, request, post_id):
 		post = get_object_or_404(Post, id=post_id, author=request.user)
-		serializer = PostsSerializer(post, data=request.data, partial=True)
+		serializer = PostsSerializer(post, data=request.data, partial=True, context={"request": request})
 		
 		if not serializer.is_valid():
 			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -54,12 +54,12 @@ class CommentsView(APIView):
 	
 	def get(self, request, post_id):
 		get_object_or_404(Post, id=post_id)
-		comments = [CommentsSerializer(instance=comment).data for comment in Comment.objects.filter(post_id=post_id)]
+		comments = [CommentsSerializer(instance=comment, context={"request": request}).data for comment in Comment.objects.filter(post_id=post_id)]
 		return Response({"comments": comments}, status=status.HTTP_200_OK)
 	
 	def post(self, request, post_id):
 		post = get_object_or_404(Post, id=post_id)
-		serializer = CommentsSerializer(data=request.data)
+		serializer = CommentsSerializer(data=request.data, context={"request": request})
 		if not serializer.is_valid():
 			return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 		serializer.save(author=request.user, post=post)
@@ -72,7 +72,7 @@ class CommentsView(APIView):
 	
 	def put(self, request, comment_id):
 		comment = get_object_or_404(Comment, id=comment_id, author=request.user)
-		serializer = CommentsSerializer(comment, data=request.data, partial=True)
+		serializer = CommentsSerializer(comment, data=request.data, partial=True, context={"request": request})
 		
 		if not serializer.is_valid():
 			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
