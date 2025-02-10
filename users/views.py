@@ -14,7 +14,7 @@ def login(request):
 	user = serializer.validated_data
 	token, created = Token.objects.get_or_create(user=user)
 	user_serializer = UserSerializer(instance=user)
-	return Response({"token": token.key, "user_id": user_serializer.data["id"]}, status=status.HTTP_200_OK)
+	return Response({"token": token.key, "username": user_serializer.data["username"]}, status=status.HTTP_200_OK)
 	
 @api_view(["POST"])
 def register(request):
@@ -23,7 +23,7 @@ def register(request):
 		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 	user = serializer.save()
 	token = Token.objects.create(user=user)
-	return Response({"token": token.key, "user_id": user.id}, status=status.HTTP_201_CREATED)
+	return Response({"token": token.key, "username": user.username}, status=status.HTTP_201_CREATED)
 
 @api_view(["POST"])
 @authentication_classes([TokenAuthentication])
